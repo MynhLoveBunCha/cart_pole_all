@@ -1,0 +1,7 @@
+﻿-ID:\my_projects\inverted_pendulum_on_ur5\MATLAB\system_2D\Mathematics_model
+-ID:\my_projects\inverted_pendulum_on_ur5\MATLAB\system_2D\Mathematics_model\GHAC_ctrl_swingUp_ert_rtw
+-I"C:\Program Files\MATLAB\R2023b\extern\include"
+-I"C:\Program Files\MATLAB\R2023b\simulink\include"
+-I"C:\Program Files\MATLAB\R2023b\rtw\c\src"
+-I"C:\Program Files\MATLAB\R2023b\rtw\c\src\ext_mode\common"
+-I"C:\Program Files\MATLAB\R2023b\rtw\c\ert"

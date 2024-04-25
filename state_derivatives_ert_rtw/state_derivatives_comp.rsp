@@ -1,0 +1,7 @@
+﻿-IC:\Users\doann\OneDrive\Desktop\2023_1\inverted_pendulum_on_ur5\MATLAB\system_2D\Mathematics_model
+-IC:\Users\doann\OneDrive\Desktop\2023_1\inverted_pendulum_on_ur5\MATLAB\system_2D\Mathematics_model\state_derivatives_ert_rtw
+-I"C:\Program Files\MATLAB\R2022b\extern\include"
+-I"C:\Program Files\MATLAB\R2022b\simulink\include"
+-I"C:\Program Files\MATLAB\R2022b\rtw\c\src"
+-I"C:\Program Files\MATLAB\R2022b\rtw\c\src\ext_mode\common"
+-I"C:\Program Files\MATLAB\R2022b\rtw\c\ert"
