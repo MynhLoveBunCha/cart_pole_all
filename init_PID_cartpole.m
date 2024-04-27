@@ -1,22 +1,10 @@
-clear,clc;
-
+clear,clc,close all;
+%% System params
 m = 0.116527;     % pend mass (kg)
 M = 0.28;     % cart mass (kg)
-L = 0.3000/2;    % pend's length from rotational hinge to center of gravity (m)
+L = 0.3/2;    % pend's length from rotational hinge to center of gravity (m)
 I = (1/3)*m*L^2;   % moment of inertia around center of gravity (kg.m2)
 g = 9.80665;     % gravitational accel (m/s2)
-
-% swing-up control params (main)
-k_su = 2;
-k_cw = 6;
-k_vw = 2.5;
-k_em = 10;
-eta  = 1.3;
-angle_threshold = deg2rad(25);  % degree
-uMax = 3*g;    % maximum input (m/s2)
-x1_max = 0.43;% track limit (m)
-x2_max = 2; % cart vel max (m/s)
-E_up = m*g*L*cos(0);
 
 % friction
 kd = 0.000161;   % damping const (N.s/rad)
@@ -24,14 +12,53 @@ kdr = 0.000001;
 kt = 150;
 Fc = 0.00040;
 
-%% LQR design
-k_lqr = discrete_lqr(m, M, L, I, g, kd, kt, Fc);
-
 %% initial condition
 init_angle = 30/180*pi;
+
 %% open sys
-mdl = "my_cart_pend.slx";
+mdl = "PID_cartpole";
 open_system(mdl);
+
+%% PID tuning
+optimDone = false;
+
+% _____________Tune this optimization params_____________
+trackingTime = 2; % sec
+gainMargin = 6;
+phaseMargin = 40;
+MinDamping = 0.5;
+MaxFrequency = 45;
+% _____________Tune this optimization params_____________
+
+if ~optimDone
+    % requirement 1: Tracking of x command (2s)
+    req1 = TuningGoal.Tracking('x_ref','x',trackingTime);
+    
+    % requirement 2: Stability margins
+    req2 = TuningGoal.Margins('u', gainMargin, phaseMargin);
+    
+    % requirement 3: Pole locations
+    req3 = TuningGoal.Poles(0,MinDamping,MaxFrequency);
+    
+    % Specify tunable PID blocks
+    ST0 = slTuner(mdl,{'x_ctrl','xd_ctrl', 'q_ctrl','qd_ctrl'});
+    addPoint(ST0,'u');
+    
+    % Optimizing
+    rng(0)
+    Options = systuneOptions('RandomStart',20);
+    [ST, fSoft] = systune(ST0,req1,[req2,req3],Options);
+    
+    % update block values
+    writeBlockValue(ST)
+
+    % root locus
+    Lo = getLoopTransfer(ST,'u',-1);
+    figure(1); clf;
+    rlocus(Lo)
+end
+
+%% simulation
 out = sim(mdl);
 
 %% ANIMATION
@@ -42,8 +69,8 @@ p.g = 9.80665;  % (m/s^2) gravity
 p.l = 0.3000;   % (m) pendulum (pole) length
 
 % Reshape data
-t = out.data_energy_LQR.Time';
-data = out.data_energy_LQR.Data;
+t = out.data_PID.Time';
+data = out.data_PID.Data;
 xx = data(:, 1:4)';
 u_cl = data(:, 5);
 
@@ -87,7 +114,7 @@ plotHandles.poleHandle = [];
 
 frameLst = [];
 timeLst = [];
-saveGIF = false;
+
 
 tic;
 while time < t(end)
@@ -108,8 +135,10 @@ while time < t(end)
 end
 timeLst = [timeLst; time];
 
+%% save video
+saveGIF = false;
 if saveGIF
-    filename = "LQR_cartPend.gif"; % Specify the output file name
+    filename = "PID_cartpole.gif"; % Specify the output file name
     for idx = 1:size(frameLst)
         [A,map] = rgb2ind(frame2im(frameLst(idx,:)),256);
         if idx == 1

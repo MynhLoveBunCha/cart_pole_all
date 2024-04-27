@@ -1,9 +1,11 @@
 clear, clc, close all;
 
 %% data prep
-RSHAC = load("RSHAC_30_deg.mat").out;
-HAC = load("HAC_thayLe_30_deg.mat").out;
-LQR = load("LQR_cartPend_30deg.mat").out;
+initAngle = 10; %deg
+
+RSHAC = load(sprintf("RSHAC_%d_deg_20sec.mat", initAngle)).out;
+HAC = load(sprintf("HAC_thayLe_%d_deg_20sec.mat", initAngle)).out;
+LQR = load(sprintf("LQR_cartPend_%ddeg_20sec.mat", initAngle)).out;
 
 % get time
 t = RSHAC.data_HAC.Time';
@@ -33,7 +35,7 @@ q_d_LQR = data_LQR(:, 4);
 u_LQR   = data_LQR(:, 5);
 
 % ref signal
-ref_step = 0.2.*heaviside(t - 4);
+ref_step = 0.2.*heaviside(t - 10);
 ref_zero = zeros(size(t));
 %% plot prep
 tiledlayout(3, 2, "TileIndexing","rowmajor", "TileSpacing","tight", "Padding","tight");
@@ -47,7 +49,7 @@ fig.Position(4) = scaleCoeff * fig.Position(4);
 %% plotting
 nexttile;
 plot(t, x_RSHAC, t, x_HAC, t, x_LQR, t, ref_step,"k--", "LineWidth", 1.5);
-legend("x_{RSHAC}","x_{HAC}", "x_{LQR}", "x_{ref}",'NumColumns',2);
+legend("x_{RSHAC}","x_{HAC}", "x_{LQR}", "x_{ref}",'NumColumns',2,'Location','southeast');
 title('Cart position');
 xlabel("time (s)");
 ylabel("(m)");
@@ -55,7 +57,7 @@ grid on;
 
 nexttile;
 plot(t, x_d_RSHAC, t, x_d_HAC, t, x_d_LQR, t, ref_zero,"k--","LineWidth", 1.5);
-legend("x_{d RSHAC}", "x_{d HAC}", "x_{d LQR}", "x_{d ref}",'NumColumns',2);
+legend("x_{d RSHAC}", "x_{d HAC}", "x_{d LQR}", "x_{d ref}",'NumColumns',2,'Location','southeast');
 title('Cart velocity');
 xlabel("time (s)");
 ylabel("(m/s)");
@@ -63,7 +65,7 @@ grid on;
 
 nexttile;
 plot(t, rad2deg(q_RSHAC), t, rad2deg(q_HAC), t, rad2deg(q_LQR), t, ref_zero,"k--", "LineWidth", 1.5);
-legend("q_{RSHAC}", "q_{HAC}", "q_{LQR}", "q_{ref}",'NumColumns',2);
+legend("q_{RSHAC}", "q_{HAC}", "q_{LQR}", "q_{ref}",'NumColumns',2,'Location','southeast');
 title('Pendulum angle');
 xlabel("time (s)");
 ylabel("(deg)");
@@ -71,7 +73,7 @@ grid on;
 
 nexttile;
 plot(t, rad2deg(q_d_RSHAC), t, rad2deg(q_d_HAC), t, rad2deg(q_d_LQR), t, ref_zero,"k--", "LineWidth", 1.5);
-legend("q_{d RSHAC}", "q_{d HAC}", "q_{d LQR}", "q_{d ref}",'NumColumns',2);
+legend("q_{d RSHAC}", "q_{d HAC}", "q_{d LQR}", "q_{d ref}",'NumColumns',2,'Location','southeast');
 title('Pendulum angular velocity');
 xlabel("time (s)");
 ylabel("(deg/s)");
@@ -79,7 +81,7 @@ grid on;
 
 nexttile;
 plot(t, u_RSHAC, t, u_HAC, t, u_LQR, "LineWidth", 1.5);
-legend("u_{RSHAC}", "u_{HAC}", "u_{LQR}",'NumColumns',2);
+legend("u_{RSHAC}", "u_{HAC}", "u_{LQR}",'NumColumns',2,'Location','southeast');
 title('Input');
 xlabel("time (s)");
 ylabel("(m/s2)");

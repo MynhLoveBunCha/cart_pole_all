@@ -20,26 +20,33 @@ if useThayLe
     x_min = -x_max;
     xd_max = 2.0; % m/s
     xd_min = -xd_max;
-    q_max = 10/180*pi;  % rad
+    q_max = deg2rad(10);  % rad
     q_min = -q_max;
-    qd_max = 4; % rad/s
+    qd_max = 3; % rad/s
     qd_min = -qd_max;
     u_max = 3 * g;
     u_min = -u_max;
     
+    alpha = 15/180*pi;
+    beta = 50/180*pi; % beta > alpha
 else
     x_max = 0.43; % m
     x_min = -x_max;
     xd_max = 2.0; % m/s
     xd_min = -xd_max;
 
+    % -----------------------Don't need these-----------------------
     q_max = 15/180*pi;  % rad
     q_min = -q_max;
     qd_max = 5; % rad/s
     qd_min = -qd_max;
+    % -----------------------Don't need these-----------------------
 
     u_max = 3 * g;
     u_min = -u_max;
+
+    alpha = 15/180*pi;
+    beta = 50/180*pi; % beta > alpha
 end
 
 %thay Le ---------------------
@@ -63,9 +70,6 @@ SQMs_u(3) = theta;
 SQMs_u(4) = theta+alpha_u*(1-theta)*(1-alpha_u);
 SQMs_u(5) = theta+alpha_u*(1-theta);
 %thay Le ---------------------
-
-alpha = 15/180*pi;
-beta = 50/180*pi; % beta > alpha
 
 w_low = 0.25;
 w_high = 1;
@@ -145,7 +149,7 @@ for k = 1:(n_rules_qd-1)/2
 end
 
 %% initial condition
-init_angle = 20/180*pi;
+init_angle = 30/180*pi;
 
 %% open sys
 mdl = "cartPend_HAC.slx";
