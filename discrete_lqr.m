@@ -24,7 +24,8 @@ D_discrete = my_discrete_cartpend.D;
 Q = diag([4 0.1 11 0.2 ]); % [x xd q qd]
 R = 0.02;
 
-[k_lqr, ~, poles] = dlqr(A_discrete,B_discrete,Q,R);
+% [k_lqr, ~, poles] = dlqr(A_discrete,B_discrete,Q,R);
+[k_lqr, ~, poles] = lqr(A,B,Q,R);
 disp(k_lqr);
 disp(poles);
 end

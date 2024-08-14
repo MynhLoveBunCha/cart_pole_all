@@ -13,7 +13,7 @@ kt = 150;
 Fc = 0.00040;
 
 %% initial condition
-init_angle = 30/180*pi;
+init_angle = 0/180*pi;
 
 %% open sys
 mdl = "PID_cartpole";
@@ -23,9 +23,9 @@ open_system(mdl);
 optimDone = false;
 
 % _____________Tune this optimization params_____________
-trackingTime = 2; % sec
-gainMargin = 6;
-phaseMargin = 40;
+trackingTime = 3; % sec
+gainMargin = 3;
+phaseMargin = 20;
 MinDamping = 0.5;
 MaxFrequency = 45;
 % _____________Tune this optimization params_____________
@@ -41,7 +41,7 @@ if ~optimDone
     req3 = TuningGoal.Poles(0,MinDamping,MaxFrequency);
     
     % Specify tunable PID blocks
-    ST0 = slTuner(mdl,{'x_ctrl','xd_ctrl', 'q_ctrl','qd_ctrl'});
+    ST0 = slTuner(mdl,{'x_ctrl', 'q_ctrl'});
     addPoint(ST0,'u');
     
     % Optimizing

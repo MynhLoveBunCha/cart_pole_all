@@ -13,40 +13,104 @@ kdr = 0.000001;
 kt = 150;
 Fc = 0.00040;
 
+%% LQR design
+k_lqr = discrete_lqr(m, M, L, I, g, kd, kt, Fc);
+
+%% initial condition
+saveData = false;
+initial_angle = 0; %deg
+target_pos = 0;
+experiment_num = 1; %1-balance, 2-move
+
+init_cont = [0.1041, -0.2018, deg2rad(-14.9877), deg2rad(135.7108)];
+
+init_angle = deg2rad(initial_angle); %rad
+fprintf("Initial angle: %d deg\n", initial_angle);
+
 %% HAC params
-useThayLe = false;
-if useThayLe
-    x_max = 0.43; % m
-    x_min = -x_max;
-    xd_max = 2.0; % m/s
-    xd_min = -xd_max;
-    q_max = deg2rad(10);  % rad
-    q_min = -q_max;
-    qd_max = 3; % rad/s
-    qd_min = -qd_max;
-    u_max = 3 * g;
-    u_min = -u_max;
+caseSwitch = 2; % 1-LQR, 2-RSHAC, 3-ThayLe, 4-Fuzzy controller (TSK)
+switch caseSwitch
+    case 1
+        disp('Using LQR')
+        dataFileName = sprintf("LQR_init_%d_deg_experiment_%d.mat", initial_angle, experiment_num);
+        videoFileName = sprintf("LQR_init_%d_deg_experiment_%d.mp4", initial_angle, experiment_num); % Specify the output file name
+        x_max = 0.43; % m
+        x_min = -x_max;
+        xd_max = 2.0; % m/s
+        xd_min = -xd_max;
     
-    alpha = 15/180*pi;
-    beta = 50/180*pi; % beta > alpha
-else
-    x_max = 0.43; % m
-    x_min = -x_max;
-    xd_max = 2.0; % m/s
-    xd_min = -xd_max;
+        % -----------------------Don't need these-----------------------
+        q_max = 15/180*pi;  % rad
+        q_min = -q_max;
+        qd_max = 5; % rad/s
+        qd_min = -qd_max;
+        % -----------------------Don't need these-----------------------
+    
+        u_max = 3 * g;
+        u_min = -u_max;
+    
+        alpha = 15/180*pi;
+        beta = 50/180*pi; % beta > alpha
+    case 2
+        disp('Using RSHAC')
+        dataFileName = sprintf("RSHAC_init_%d_deg_experiment_%d.mat", initial_angle, experiment_num);
+        videoFileName = sprintf("RSHAC_init_%d_deg_experiment_%d.mp4", initial_angle, experiment_num);
+        x_max = 0.43; % m
+        x_min = -x_max;
+        xd_max = 2.0; % m/s
+        xd_min = -xd_max;
+    
+        % -----------------------Don't need these-----------------------
+        q_max = 15/180*pi;  % rad
+        q_min = -q_max;
+        qd_max = 5; % rad/s
+        qd_min = -qd_max;
+        % -----------------------Don't need these-----------------------
+    
+        u_max = 3 * g;
+        u_min = -u_max;
+    
+        alpha = 5/180*pi;
+        beta = 50/180*pi; % beta > alpha
 
-    % -----------------------Don't need these-----------------------
-    q_max = 15/180*pi;  % rad
-    q_min = -q_max;
-    qd_max = 5; % rad/s
-    qd_min = -qd_max;
-    % -----------------------Don't need these-----------------------
+    case 3
+        disp('Using HAC (thay Le)');
+        dataFileName = sprintf("HAC_init_%d_deg_experiment_%d.mat", initial_angle, experiment_num);
+        videoFileName = sprintf("HAC_init_%d_deg_experiment_%d.mp4", initial_angle, experiment_num);
+        x_max = 0.43; % m
+        x_min = -x_max;
+        xd_max = 2.0; % m/s
+        xd_min = -xd_max;
+        q_max = deg2rad(10);  % rad
+        q_min = -q_max;
+        qd_max = 4; % rad/s
+        qd_min = -qd_max;
+        u_max = 3 * g;
+        u_min = -u_max;
+        
+        alpha = 5/180*pi;
+        beta = 50/180*pi; % beta > alpha
 
-    u_max = 3 * g;
-    u_min = -u_max;
-
-    alpha = 15/180*pi;
-    beta = 50/180*pi; % beta > alpha
+    case 4
+        disp('Using Fuzzy controller (Takagi Sugeno type 1)');
+        dataFileName = sprintf("FC_init_%d_deg_experiment_%d.mat", initial_angle, experiment_num);
+        videoFileName = sprintf("FC_init_%d_deg_experiment_%d.mp4", initial_angle, experiment_num);
+        x_max = 0.43; % m
+        x_min = -x_max;
+        xd_max = 2.0; % m/s
+        xd_min = -xd_max;
+        q_max = deg2rad(20); % use 15 for init10deg, 20 for init20deg
+        q_min = -q_max;
+        qd_max = 6; % rad/s use 5 for init10deg, 6 for init20deg
+        qd_min = -qd_max;
+        u_max = 3 * g;
+        u_min = -u_max;
+        
+        alpha = 5/180*pi;
+        beta = 50/180*pi; % beta > alpha
+    otherwise
+        disp('Invalid case');
+        return
 end
 
 %thay Le ---------------------
@@ -80,8 +144,8 @@ a_sigmoid_q_d = 0.45;
 
 
 %% video saver
-filename = "RSHAC_cartPend.gif"; % Specify the output file name
-saveGIF = false;
+doAnimation = true;
+saveGIF = true;
 %% swing-up control params (main)
 k_su = 2;
 k_cw = 6;
@@ -95,10 +159,16 @@ x2_max = 2; % cart vel max (m/s)
 E_up = m*g*L*cos(0);
 
 %% HA SQMs values
-n_rules_x = 5; fuzzyDeg_x = 0.5; fuzzyDeg_u_x_s = 0.3;
-n_rules_xd = 5; fuzzyDeg_xd = 0.5; fuzzyDeg_u_xd_s = 0.75;
+% n_rules_x = 5; fuzzyDeg_x = 0.5; fuzzyDeg_u_x_s = 0.3;
+% n_rules_xd = 5; fuzzyDeg_xd = 0.5; fuzzyDeg_u_xd_s = 0.75;
+% n_rules_q = 5; fuzzyDeg_q = 0.5; fuzzyDeg_u_q_s = 0.725;
+% n_rules_qd = 7; fuzzyDeg_qd = 0.5; fuzzyDeg_u_qd_s = 0.8; %TODO: increase this to quickly stablize the system
+
+n_rules_x = 7; fuzzyDeg_x = 0.5; fuzzyDeg_u_x_s = 0.35;
+n_rules_xd = 5; fuzzyDeg_xd = 0.5; fuzzyDeg_u_xd_s = 0.8;
 n_rules_q = 5; fuzzyDeg_q = 0.5; fuzzyDeg_u_q_s = 0.725;
-n_rules_qd = 7; fuzzyDeg_qd = 0.5; fuzzyDeg_u_qd_s = 0.8; %TODO: increase this to quickly stablize the system
+n_rules_qd = 7; fuzzyDeg_qd = 0.5; fuzzyDeg_u_qd_s = 0.8;
+
 %
 x_sqm = zeros(1, n_rules_x);
 x_sqm(:, (n_rules_x-1)/2+1) = 0.5;
@@ -148,98 +218,109 @@ for k = 1:(n_rules_qd-1)/2
     u_qd_sqm(:, end + 1 - k) = 0.5*(1 + fuzzyDeg_u_qd_s^k);
 end
 
-%% initial condition
-init_angle = 30/180*pi;
-
 %% open sys
 mdl = "cartPend_HAC.slx";
 open_system(mdl);
 out = sim(mdl);
+if saveData
+    save(dataFileName,"out");
+end
 
 %% ANIMATION
-% Physical Parameters  (big mass and inertia for "slow" physics)
-p.m1 = 0.28;  % (kg) Cart mass
-p.m2 = 0.116527;  % (kg) pole mass
-p.g = 9.80665;  % (m/s^2) gravity
-p.l = 0.3000;   % (m) pendulum (pole) length
 
-% Reshape data
-t = out.data_HAC.Time';
-data = out.data_HAC.Data;
-xx = data(:, 1:4)';
-u_cl = data(:, 5);
-
-% Convert states to cartesian positions:
-pos = cartPolePosition(xx,p);
-x1 = pos(1,:);
-y1 = pos(2,:);
-x2 = pos(3,:);
-y2 = pos(4,:);
-
-% Plotting parameters:
-p.w = 0.4*p.l;  %Width of the cart
-p.h = 0.2*p.l;  %Height of the cart
-p.r = 0*p.l;  % Radius of the pendulum bob
-
-% Compute the extents of the drawing, keeping everything in view
-padding = 0.2*p.l;  %Free space around edges
-xLow = -0.55;
-xUpp = 0.55;
-yLow = -0.35;
-yUpp = 0.35;
-extents = [xLow,xUpp,yLow,yUpp];
-
-% Create and clear a figure:
-figure(2); clf;
-hold on;    %  <-- This is important!
-set(gcf,'DoubleBuffer','on');   % Prevents flickering (maybe??)
-scaleCoeff = 1.5;
-fig = gcf;
-fig.Position(1) = fig.Position(1) / scaleCoeff;
-fig.Position(2) = fig.Position(2) / scaleCoeff;
-fig.Position(3) = scaleCoeff * fig.Position(3);
-fig.Position(4) = scaleCoeff * fig.Position(4);
-
-time = 0;
-
-plotHandles = struct;
-plotHandles.railHandle = [];
-plotHandles.cartHandle = [];
-plotHandles.poleHandle = [];
-
-frameLst = [];
-timeLst = [];
-
-
-tic;
-while time < t(end)
+if doAnimation
+    % Physical Parameters  (big mass and inertia for "slow" physics)
+    p.m1 = 0.28;  % (kg) Cart mass
+    p.m2 = 0.116527;  % (kg) pole mass
+    p.g = 9.80665;  % (m/s^2) gravity
+    p.l = 0.3000;   % (m) pendulum (pole) length
     
-    % Compute the position of the system at the current real world time
-    posDraw = interp1(t',pos',time')';
+    % Reshape data
+    t = out.data_RSHAC.Time';
+    data = out.data_RSHAC.Data;
+    xx = data(:, 1:4)';
+    u_cl = data(:, 5);
     
-    % Redraw the image
-    plotHandles = drawCartPole(time, posDraw, extents, p, plotHandles);
-
-    % create video
-    frame = getframe(fig);
-    frameLst = [frameLst; frame];
+    % Convert states to cartesian positions:
+    pos = cartPolePosition(xx,p);
+    x1 = pos(1,:);
+    y1 = pos(2,:);
+    x2 = pos(3,:);
+    y2 = pos(4,:);
+    
+    % Plotting parameters:
+    p.w = 0.4*p.l;  %Width of the cart
+    p.h = 0.2*p.l;  %Height of the cart
+    p.r = 0*p.l;  % Radius of the pendulum bob
+    
+    % Compute the extents of the drawing, keeping everything in view
+    padding = 0.2*p.l;  %Free space around edges
+    xLow = -0.55;
+    xUpp = 0.55;
+    yLow = -0.35;
+    yUpp = 0.35;
+    extents = [xLow,xUpp,yLow,yUpp];
+    
+    % Create and clear a figure:
+    figure(2); clf;
+    hold on;    %  <-- This is important!
+    set(gcf,'DoubleBuffer','on');   % Prevents flickering (maybe??)
+    scaleCoeff = 1.5;
+    fig = gcf;
+    fig.Position(1) = fig.Position(1) / scaleCoeff;
+    fig.Position(2) = fig.Position(2) / scaleCoeff;
+    fig.Position(3) = scaleCoeff * fig.Position(3);
+    fig.Position(4) = scaleCoeff * fig.Position(4);
+    
+    time = 0;
+    
+    plotHandles = struct;
+    plotHandles.railHandle = [];
+    plotHandles.cartHandle = [];
+    plotHandles.poleHandle = [];
+    
+    frameLst = [];
+    timeLst = [];
+    
+    
+    tic;
+    while time < t(end)
+        
+        % Compute the position of the system at the current real world time
+        posDraw = interp1(t',pos',time')';
+        
+        % Redraw the image
+        plotHandles = drawCartPole(time, posDraw, extents, p, plotHandles);
+    
+        % create video
+        frame = getframe(fig);
+        frameLst = [frameLst; frame];
+        timeLst = [timeLst; time];
+    
+        % Update current time
+        time = toc;
+    end
     timeLst = [timeLst; time];
-
-    % Update current time
-    time = toc;
-end
-timeLst = [timeLst; time];
-
-if saveGIF
-    for idx = 1:size(frameLst)
-        [A,map] = rgb2ind(frame2im(frameLst(idx,:)),256);
-        if idx == 1
-            imwrite(A,map,filename,"gif","LoopCount",Inf,"DelayTime",timeLst(idx+1,:)-timeLst(idx,:));
-        else
-            imwrite(A,map,filename,"gif","WriteMode","append","DelayTime",timeLst(idx+1,:)-timeLst(idx,:));
+    
+    if saveGIF
+        % for idx = 1:size(frameLst)
+        %     [A,map] = rgb2ind(frame2im(frameLst(idx,:)),256);
+        %     if idx == 1
+        %         imwrite(A,map,videoFileName,"gif","LoopCount",Inf,"DelayTime",timeLst(idx+1,:)-timeLst(idx,:));
+        %     else
+        %         imwrite(A,map,videoFileName,"gif","WriteMode","append","DelayTime",timeLst(idx+1,:)-timeLst(idx,:));
+        %     end
+        % end
+        v = VideoWriter(videoFileName, 'MPEG-4');
+        v.FrameRate = 45;
+        open(v)
+        for idx = 1:size(frameLst)
+            writeVideo(v,frameLst(idx,:))
         end
+        close(v)
     end
 end
+
 
 %% plot HA inference for intermediate controllers
 clf;
@@ -259,4 +340,5 @@ grid on;
 title("SQSM lines", "FontSize", 20);
 xlabel("Semantic state", "FontSize", 15);
 ylabel("Semantic intermediate input", "FontSize", 15);
-legend(["x", "x_d", "q", "qd"], "Location","southeast", "FontSize", 12);
+legend(["$x$", "$\dot{x}$", "$q$", "$\dot{q}$"], 'Interpreter','latex', "Location", "southeast", "FontSize", 12);
+% exportgraphics(gcf, 'SQSM.pdf', 'ContentType', 'vector'); 

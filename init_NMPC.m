@@ -24,6 +24,7 @@ X0 = [0; 0; init_angle; 0];   % initial pose
 mdl = "cartPend_MPC.slx";
 open_system(mdl);
 out = sim(mdl);
+saveGIF = false;
 
 %% ANIMATION
 % Physical Parameters  (big mass and inertia for "slow" physics)
@@ -78,7 +79,7 @@ plotHandles.poleHandle = [];
 
 frameLst = [];
 timeLst = [];
-saveGIF = false;
+
 
 tic;
 while time < t(end)

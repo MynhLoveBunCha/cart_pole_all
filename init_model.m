@@ -28,7 +28,7 @@ Fc = 0.00040;
 k_lqr = discrete_lqr(m, M, L, I, g, kd, kt, Fc);
 
 %% initial condition
-init_angle = 30/180*pi;
+init_angle = 181/180*pi;
 %% open sys
 mdl = "my_cart_pend.slx";
 open_system(mdl);
